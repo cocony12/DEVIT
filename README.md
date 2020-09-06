@@ -45,7 +45,7 @@
 | 0349944 | 김명석 | Team leader<br />Project manager |
 | 0346364 | 이근우 | Backend developer                |
 | 0345559 | 안성민 | Frontend developer               |
-| 0347064 | 강슬기 | Frontend developer               |
+| 0347064 | 강슬기 | Full stack developer             |
 
 
 
