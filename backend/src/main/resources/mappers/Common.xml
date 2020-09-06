@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.devit.repository.CommonRepository">
+	
+	<!-- 프로젝트 정보 검색 -->
+	<select id="selectInfomationLectureBySearch" resultType="SearchInfoLectureResponse">
+		 SELECT u.nickname,
+				u.profile,
+				l.lecture_id lectureId,
+				l.title,
+				l.content,
+				l.thumbnail_url thumbnailUrl,
+				l.view_count viewCount,
+				l.type,
+				(SELECT COUNT(1)
+		           FROM lecture_like
+				  WHERE like_flag = 'Y' AND lecture_id = l.lecture_id) likeCount,
+				(SELECT COUNT(1)
+				   FROM lecture_sub_index
+				  WHERE lecture_id = l.lecture_id AND video_id IS NOT NULL AND lecture_sub_index.order != 0) AS lectureCount,
+				tag.tag_name tagName,
+				search.cnt totalCount,
+				CASE WHEN EXISTS( SELECT 1
+									FROM lecture_like
+								   WHERE like_flag = 'Y' AND user_id = 8 AND l.lecture_id = lecture_id)
+					 THEN TRUE
+					 ELSE FALSE
+				 END AS userLikeYn
+		  FROM lecture l LEFT OUTER JOIN user u
+						 ON l.user_id = u.user_id
+						 LEFT OUTER JOIN (SELECT GROUP_CONCAT(tag_name) tag_name, common_id
+											FROM lecture_tag
+										GROUP BY common_id) tag
+						 ON l.common_id = tag.common_id
+						 CROSS JOIN (SELECT COUNT(1) AS cnt
+											FROM lecture l
+										 LEFT OUTER JOIN (SELECT GROUP_CONCAT(tag_name) tag_name, common_id
+															FROM lecture_tag
+														GROUP BY common_id) tag
+										 ON l.common_id = tag.common_id
+										 WHERE 1 = 1
+										 			<foreach collection="searchText" item="text" index="index">
+										 				AND (l.title LIKE CONCAT('%', #{text},'%')
+											            OR l.content LIKE CONCAT('%', #{text},'%')
+											            OR tag.tag_name LIKE CONCAT('%', #{text},'%'))
+										 			</foreach>
+										            ) search
+		WHERE 1 = 1
+			        <foreach collection="searchText" item="text" index="index">
+			 				AND (l.title LIKE CONCAT('%', #{text},'%')
+				            OR l.content LIKE CONCAT('%', #{text},'%')
+				            OR tag.tag_name LIKE CONCAT('%', #{text},'%'))
+		 			</foreach>
+		ORDER BY viewCount DESC, likeCount DESC
+		LIMIT #{startPage}, 20;
+	</select>
+	
+	<!-- 목차 정보 검색 -->
+	<select id="selectInfomationIndexBySearch" resultType="SearchInfoIndexResponse">
+		 SELECT lsi.lecture_id lectureId,
+				lsi.sub_id subId,
+	            lsi.order,
+	            lsi.title,
+	            lsi.common_id commonId,
+	            lsh.player_url playerUrl,
+	            lsh.play_time playTime,
+	            lsh.thumbnail_url thumbnailUrl,
+	            lsh.view_count viewCount,
+	            tag.tag_name tagName,
+	            u.nickname,
+	            u.profile,
+	            (SELECT COUNT(1)
+				   FROM lecture_sub_his_like
+				  WHERE like_flag = 'Y' AND
+						lecture_id = lsi.lecture_id AND
+	                    sub_id = lsi.sub_id AND
+	                    sub_his_id = lsh.sub_his_id) likeCount,
+				CASE WHEN EXISTS( SELECT 1
+								    FROM lecture_sub_his_like
+								   WHERE like_flag = 'Y' AND user_id = #{userId} AND lsh.sub_his_id = sub_his_id)
+						 THEN TRUE
+						 ELSE FALSE
+				 END AS userLikeYn,
+	             c.cnt totalCount
+		  FROM lecture_sub_index lsi
+			   LEFT OUTER JOIN user u
+			   ON lsi.user_id = u.user_id
+	           LEFT OUTER JOIN (
+						SELECT GROUP_CONCAT(tag_name) tag_name, common_id
+	                      FROM lecture_tag
+	                  GROUP BY common_id
+	           ) tag
+	           ON tag.common_id = lsi.common_id
+	           LEFT OUTER JOIN lecture_sub_history lsh
+	           ON lsh.lecture_id = lsi.lecture_id AND
+	           lsh.sub_id = lsi.sub_id AND
+	           lsi.video_id = lsh.sub_his_id
+	           left outer join
+	           lecture_sub_history lshw
+	           ON lshw.lecture_id = lsi.lecture_id AND
+	           lshw.sub_id = lsi.sub_id AND
+	           lsi.wiki_id = lshw.sub_his_id
+	           CROSS JOIN (
+							SELECT COUNT(1) cnt
+							 FROM lecture_sub_index lsi
+	                         LEFT OUTER JOIN 
+	                         (
+									SELECT GROUP_CONCAT(tag_name) tag_name, common_id
+									  FROM lecture_tag
+								  GROUP BY common_id
+						   ) tag
+						   ON tag.common_id = lsi.common_id
+						   LEFT OUTER JOIN lecture_sub_history lshw
+						   ON lshw.lecture_id = lsi.lecture_id AND
+						   lshw.sub_id = lsi.sub_id AND
+							lsi.wiki_id = lshw.sub_his_id
+						 WHERE 1 = 1 -- 아래 부분 반복문 필요
+						 		AND lsi.order != 0
+						 		<foreach collection="searchText" item="text" index="index">
+					 				AND (lsi.title LIKE CONCAT('%', #{text},'%') OR
+										 lshw.wiki_content LIKE CONCAT('%', #{text},'%') OR
+										 tag.tag_name LIKE CONCAT('%', #{text},'%'))
+					 			</foreach>
+								) c
+		 WHERE 1 = 1 -- 아래 부분 반복문 필요
+			<foreach collection="searchText" item="text" index="index">
+ 				AND (lsi.title LIKE CONCAT('%', #{text},'%') OR
+					 lshw.wiki_content LIKE CONCAT('%', #{text},'%') OR
+					 tag.tag_name LIKE CONCAT('%', #{text},'%'))
+ 			</foreach>
+				AND lsi.order != 0
+		 ORDER BY lsh.view_count DESC, likeCount DESC
+	     LIMIT #{startPage}, 20;
+	</select>
+	
+   	<!-- 메인화면 데빗 현황 조회 -->
+      <select id="getMainStatus" resultType="MainStatusResponse">
+      
+		select concat(format(ifnull(u.totalUsers, 0), 0), '명') as totalUsers, 
+			   concat(format(ifnull(d.totalDeviters, 0), 0), '명') as totalDeviters, 
+	           concat(format(ifnull(l.totalLectures, 0), 0), '강의') as totalLectures
+	      from (
+				select 1
+	              from dual
+			   ) a
+			   left outer join
+	           (
+				select count(1) as totalUsers
+				  from user
+			   ) u
+	           on
+	           1=1
+			   left outer join
+	           (
+	            select count(1) as totalDeviters 
+                from (
+		                select user_id
+			              from lecture_sub_history 
+						 where accept_yn = 'Y'
+					  group by user_id
+		              ) a
+	           ) d
+	           on
+	           1=1
+	           left outer join
+	           (
+	            select count(1) as totalLectures
+	              from lecture
+				 where deleted_flag = 'N'
+	           ) l
+	           on
+	           1=1;
+      </select>
+      
+      
+      	
+   	<!-- 메인화면 랭킹 현황 조회 -->
+      <select id="getMainRank" resultType="MainRankResponse">
+			select a.user_id as userId,
+				   a.nickname as nickname,
+				   a.email as email,
+				   a.profile as profile,
+				   a.totalScore as totalScore
+			  from (
+					select u.user_id,
+						   u.nickname,
+                           u.email,
+                           u.profile,
+                           b.boardCnt,
+                           r.replyCnt,
+                           a.acceptCnt,
+                           q.reqCnt,
+                           ifnull(b.boardScore, 0) + ifnull(r.replyScore, 0) + ifnull(a.acceptScore, 0) + ifnull(q.reqScore, 0) as totalScore 
+					  from user u
+                           left outer join
+                           (
+                            select user_id, count(1) as boardCnt, count(1) * 15 as boardScore
+                              from board
+						  group by user_id
+						   ) b
+                           on
+                           u.user_id = b.user_id
+                           left outer join
+                           (
+                            select user_id, count(1) as replyCnt, count(1) * 5 as replyScore
+                              from board_reply
+						  group by user_id
+						   ) r
+                           on
+                           u.user_id = r.user_id
+                           left outer join
+                           (
+                            select user_id, count(1) as acceptCnt, count(1) * 100 as acceptScore
+                              from lecture_sub_history
+							 where accept_yn = 'Y'
+                               and delete_yn = 'N'
+						  group by user_id
+						   ) a
+                           on
+                           u.user_id = a.user_id
+                           left outer join
+                           (
+                            select user_id, count(1) as reqCnt, count(1) * 20 as reqScore
+                              from lecture_sub_history
+							 where ifnull(accept_yn, 'N') = 'N'
+                               and delete_yn = 'N'
+						  group by user_id
+						   ) q
+                           on
+                           u.user_id = q.user_id
+					 where u.active = 'Y'
+				   ) a
+		   order by a.totalScore desc, a.replyCnt desc, a.boardCnt desc, a.acceptCnt desc, a.reqCnt desc
+           limit 0, 8;
+      </select>
+</mapper>

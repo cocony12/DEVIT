@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.devit.repository.MailRepository">
+	<update id="updateEmailConfirm">
+		UPDATE user SET email_confirm = 'Y' WHERE email = #{email}
+	</update>
+	
+	<update id="updateCode">
+		UPDATE user SET code = #{code} WHERE email = #{email}
+	</update>
+	
+	<select id="confirmEmailCode" resultType="Integer">
+		SELECT count(*) FROM user
+		WHERE email = #{email} AND code = #{code}
+	</select>
+	
+	<select id="getUserCode" resultType="Integer">
+		SELECT code FROM user
+		WHERE email = #{email}
+	</select>
+	
+	<select id="setUserCodeDefault" resultType="Integer">
+		UPDATE user SET code = 0 WHERE email = #{email}
+	</select>
+	
+	<select id="checkEmailConfirm" resultType="Integer">
+		SELECT count(*) FROM user
+		WHERE email = #{email} AND email_confirm = 'Y'
+	</select>	
+	
+	<update id="updatePasswordRandom">
+		UPDATE user SET password = #{password} WHERE email = #{email} 
+	</update>
+</mapper>

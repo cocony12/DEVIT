@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.devit.repository.NoticeRepository">	
+		
+	<!--  알람 목록 조회 -->
+	<select id="getNoticeList" resultType="NoticeResponse">
+   
+	 select a.notice_id as noticeId, 
+			a.notice_type as noticeType, 
+			a.user_id as userId, 
+			a.notice_yn as noticeYn, 
+			a.read_yn as readYn, 
+			a.created_date as createdDate,
+			a.board_id as boardId, 
+			a.board_reply_id as boardReplyId, 
+            b.type as boardType, 
+            b.title as boardTitle, 
+            substr(b.content, 1, 50) as boardContent, 
+            substr(r.reply_content, 1, 50) as replyContent,
+			a.lecture_id as lectureId,
+			a.sub_id as subId,
+			a.sub_his_id as subHisId,
+            l.lectureTitle as lectureTitle,
+            l.subIndexTitle as subIndexTitle,
+            l.req_type as reqType,
+            case when a.notice_type in (1) then b.user_id
+				 when a.notice_type in (2) then r.user_id
+				 when a.notice_type in (3, 4) then l.createUserId
+                 else ''
+			end as createUserId,
+            case when a.notice_type in (1) then (select nickname from user where user_id = b.user_id)
+				 when a.notice_type in (2) then (select nickname from user where user_id = r.user_id)
+				 when a.notice_type in (3, 4) then l.createUserNickname
+                 else ''
+			end as createUserNickname,
+            case when a.notice_type in (1) then (select profile from user where user_id = b.user_id)
+				 when a.notice_type in (2) then (select profile from user where user_id = r.user_id)
+				 when a.notice_type in (3) then l.createUserProfile
+				 when a.notice_type in (4) then l.thumbnail_url
+                 else ''
+			end as profile
+	   from notice a
+            left outer join
+            board b
+            on
+            a.board_id = b.board_id
+            left outer join
+            board_reply r
+            on
+            a.board_id = r.board_id and
+            a.board_reply_id = r.board_reply_id
+            left outer join
+            (
+             select l.lecture_id,
+					lsi.sub_id,
+					lsh.sub_his_id,
+					l.title as lectureTitle,
+					l.thumbnail_url,
+					lsi.title as subIndexTitle,
+                    lsh.req_type,
+                    lsh.user_id as createUserId,
+                    (select nickname from user where user_id = lsh.user_id) as createUserNickname,
+                    (select profile from user where user_id = lsh.user_id) as createUserProfile
+               from lecture l
+                    left outer join
+                    lecture_sub_index lsi
+                    on
+                    l.lecture_id = lsi.lecture_id
+                    left outer join
+                    lecture_sub_history lsh
+                    on
+                    lsi.lecture_id = lsh.lecture_id and
+                    lsi.sub_id = lsh.sub_id
+            ) l
+            on
+            a.lecture_id = l.lecture_id and 
+            a.sub_id = l.sub_id and 
+            a.sub_his_id = l.sub_his_id 
+	  where a.user_id = #{userId}
+   order by IF(a.read_yn = 'N', 1, 2), a.created_date desc;
+	</select>
+	
+	<!-- 하나의 알람에 대한 조회 -->
+	<select id="getNoticeDetailInfo" resultType="NoticeDetailResponse">
+	 
+	 UPDATE notice SET read_yn = 'Y' WHERE notice_id  = #{noticeId};
+	
+	 select n.notice_id as noticeId, 
+	 		n.notice_yn as noticeYn,
+	 		n.read_yn as readYn,
+			n.notice_type as noticeType, 
+			n.user_id as userId, 
+			n.notice_yn as noticeYn, 
+			n.read_yn as readYn, 
+			n.board_id as boardId, 
+			n.board_reply_id as boardReplyId, 
+			n.sub_his_id as subHisId,
+			n.lecture_id as lectureId,
+			n.sub_id as subId,
+			n.created_date as createdDate,
+			(select type from board where board_id = n.board_id) as boardType,
+			(select lsi.order from lecture_sub_index lsi where lsi.sub_id = n.sub_id) as indexOrder
+	   from notice n
+	  where n.notice_id = #{noticeId};
+	</select>
+	
+	<!--  알람 개수 가져오기 -->
+	<select id="getNoticeCount" resultType="String">
+	 select count(1) as cnt
+	   from notice
+	   where user_id = #{userId} and notice_yn = 'N';
+	</select>
+	
+	
+	<update id="setNoticeRead">
+		UPDATE notice SET read_yn = 'Y' WHERE notice_id  = #{noticeId};
+	</update>
+
+	<update id="setNoticeAlert">
+		UPDATE notice SET notice_yn = 'Y' WHERE notice_id  = #{noticeId};
+	</update>
+
+	<update id="setNoticeAlertAll">
+		UPDATE notice SET notice_yn = 'Y' WHERE user_id  = #{userId};
+	</update>
+	
+	<delete id="removeNoticeAll">
+		delete from notice where user_id = #{userId};
+	</delete>
+	
+	<delete id="removeNoticeEach">
+		delete from notice where notice_id = #{noticeId};
+	</delete>
+	
+	<delete id="removeNoticeRead">
+		delete from notice where user_id = #{userId} and read_yn = 'Y';
+	</delete>
+	
+</mapper>

@@ -1,0 +1,64 @@
+stages:
+    - build
+#     # - test
+#     # - deploy
+
+gradle-build:
+    only:
+        - develop
+        - master
+    stage: build
+    script:
+        - echo '빌드를 실행할 폴더로 이동'
+        - cd backend
+        - echo '빌드 실행'
+        - gradle build
+        - echo '이미 실행 중인 컨테이너 제거'
+        - sudo docker stop devit_backend
+        - sudo docker rm devit_backend
+        - echo '이미지로 생성'
+        - sudo docker build -t devit_backend .
+        - echo '컨테이너로 빌드 및 실행'
+        - sudo docker run --privileged -v /home/ubuntu/uploads:/var/lib/ubuntu/uploads -d --name devit_backend -p 8080:8080 devit_backend
+vue-build:
+    only:
+        - develop
+        - master
+    stage: build
+    script:
+        - echo '빌드를 실행할 폴더로 이동'
+        - cd frontend
+        - echo '추가된 패키지 설치'
+        - yarn install
+        - echo 'dist 파일 생성(빌드) 시작'
+        - yarn build
+        - echo '자동 배포 완료'
+# gradle-build:
+#     stage: build
+#     script:
+#         - echo '빌드를 실행할 폴더로 이동'
+#         - cd backend
+#         - echo '빌드 실행'
+#         - gradle build
+#         - echo '이미 실행 중인 컨테이너 제거'
+#         - docker stop devit_backend
+#         - docker rm devit_backend
+#         - echo '이미지로 생성'
+#         - docker build -t devit_backend .
+#         - echo '컨테이너로 빌드 및 실행'
+#         - docker run --privileged -d --name devit_backend -v /uploads:/tmp -p 8080:8080 devit_backend
+# create-docker-mysql:
+#     stage: deploy
+#     script:
+#         - cd backend/docker
+        # - sudo docker-compose -f docker-compose.yml build
+        # - gradle build
+        # - echo 'STEP2) COPY BUILD FILE TO SERVER...'
+        # - mkdir ../Back-End/static
+        # - cp -r ./dist/* ../Back-End/static
+        # - echo 'STEP3) RUN SPRINGBOOT SERVER...'
+        # - cd ../Back-End
+        # - if [ $(expr length "$(sudo netstat -tnlp | grep 8181 | awk '{print $7}' | sed 's/\/java//g')") -ne 0 ];then sudo kill $(sudo netstat -tnlp | grep 8181 | awk '{print $7}' | sed "s/\/java//g") ;fi  # 직전서버가 정상종료되지 않고, 잔류해있을 경우 수동으로 종료하는 스크립트 개망했음 그냥 엉망진창 똥덩어리야
+        # - sudo chmod 755 ./mvnw
+        # - ./mvnw spring-boot:run
+    

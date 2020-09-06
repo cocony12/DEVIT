@@ -1,0 +1,78 @@
+spring:
+  profiles:
+   active: deploy
+
+---
+
+spring:
+  profiles: deploy
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://172.28.0.1:3306/devit?allowMultiQueries=true
+    username: root
+    password: devit
+  devtools:
+    livereload:
+      enabled: true
+  jwt:
+    secret: testJWT
+  file:
+    location: /var/lib/ubuntu/uploads
+  servlet:
+    multipart:
+      max-file-size: 2048MB
+      max-request-size: 20484MB
+  mail:
+    host: smtp.gmail.com
+    port: 465
+    username: "i3a101.devit.io@gmail.com"
+    password: "dntnvmfhwprxm!@"
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.ssl.enable: true
+
+mybatis:
+  type-aliases-package: com.ssafy.devit.model
+  mapper-locations: classpath:mappers/**/*.xml
+server:
+  port: 8080
+  
+---
+
+spring:
+  profiles: local
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/devit?allowMultiQueries=true
+#    url: jdbc:mysql://i3a101.p.ssafy.io:3306/devit?allowMultiQueries=true
+    username: root
+    password: devit
+  devtools:
+    livereload:
+      enabled: true
+  jwt:
+    secret: testJWT
+  file:
+#    location: ./upload
+     location: /home/ubuntu/uploads
+  servlet:
+    multipart:
+      max-file-size: 512MB
+      max-request-size: 512MB
+  mail:
+     host: smtp.gmail.com
+     port: 465
+     username: "i3a101.devit.io@gmail.com"
+     password: "dntnvmfhwprxm!@"
+     properties:
+        mail.smtp.auth: true
+        mail.smtp.ssl.enable: true
+        mail.smtp.ssl.trust: smtp.gmail.com
+        mail.smtp.starttls.enable: false
+        
+    
+mybatis:
+  type-aliases-package: com.ssafy.devit.model
+  mapper-locations: classpath:mappers/**/*.xml
+server:
+  port: 8080

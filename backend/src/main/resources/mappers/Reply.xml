@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ssafy.devit.repository.ReplyRepository">
+	
+	<!-- 댓글 등록 -->
+		<insert id="upload" useGeneratedKeys="true" keyProperty="boardReplyId" parameterType="Reply">
+			insert into board_reply(user_id, board_id, reply_content, parent_reply_id)
+			values(#{userId}, #{boardId}, #{replyContent}, #{parentReplyId})
+		</insert>
+	
+	<!-- 댓글 알림 등록 -->
+		<insert id="uploadNotice">			
+			insert into notice(
+				notice_type, 
+				user_id,				 
+				board_id
+			)
+			select  if(b.type = 1, 1, 2), b.user_id, b.board_id
+			from board b
+			left outer join board_reply br on b.board_id = br.board_id
+			where b.board_id = br.board_id 
+			and br.board_reply_id = #{boardReplyId}
+			and b.user_id != br.user_id;
+		</insert>
+	
+	<!--  댓글 삭제 -->
+		<update id="delete">
+			update board_reply
+			set delete_yn = 'Y', reply_modified = now()
+			where board_reply_id = #{reply_id}
+		</update>
+	
+	<!--  댓글 수정 -->
+		<update id="update">
+			update board_reply
+			set reply_content = #{replyContent}, reply_modified = now()
+			where board_reply_id = #{boardReplyId} and user_id = #{userId}
+		</update>
+		
+	<!--  댓글 조회 -->
+	<select id="info" resultType="ReplyResponse">
+	 select a.boardReplyId,
+			a.boardId,
+			a.userId,
+			a.userName,
+			a.profile,
+			a.replyContent,
+			a.replyCreated,
+			a.replyModified,
+			a.parentReplyId,
+			a.deleteYn,
+			a.hasChild,
+			a.isMine
+       from (
+		 select br.board_reply_id as boardReplyId,
+				br.board_id as boardId,
+				if(br.delete_yn='Y', 0, br.user_id) as userId,
+				if(br.delete_yn='Y', '-', u.nickname) as userName,
+				if(br.delete_yn='Y', '', u.profile) as profile,
+				if(br.delete_yn='Y', '삭제된 댓글입니다.', br.reply_content) as replyContent,
+				if(br.delete_yn='Y', null, br.reply_created) as replyCreated,
+				if(br.delete_yn='Y', null, br.reply_modified) as replyModified,
+				br.parent_reply_id as parentReplyId,
+				br.delete_yn as deleteYn,
+                case when exists (select 1 from board_reply where parent_reply_id = br.board_reply_id and delete_yn = 'N') then 'Y'
+                     else 'N'
+				end as hasChild,
+				if(br.user_id = #{userId}, 'Y', 'N') as isMine
+		from board_reply br
+		     left outer join 
+             user u 
+             on 
+             br.user_id = u.user_id
+	   where br.board_id = #{bid}
+			) a
+	   where 1=1
+         and (a.deleteYn = 'N' or a.hasChild = 'Y')
+	order by if(a.parentReplyId = 0, a.boardReplyId, a.parentReplyId), a.boardReplyId;
+	</select>
+</mapper>
