@@ -2,7 +2,7 @@
 
 <br>
 
-[![DEVIT 시연영상](http://img.youtube.com/vi/QYNwbZHmh8g/0.jpg)](https://youtu.be/PY5tBlNqEWE?t=0s) 
+[![DEVIT 시연영상](http://img.youtube.com/vi/PY5tBlNqEWE/0.jpg)](https://youtu.be/PY5tBlNqEWE?t=0s) 
 
 <br>
 
