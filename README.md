@@ -2,7 +2,7 @@
 
 <br>
 
-<iframe width="900" height="506" src="https://www.youtube.com/embed/PY5tBlNqEWE" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![DEVIT 시연영상](http://img.youtube.com/vi/QYNwbZHmh8g/0.jpg)](https://youtu.be/PY5tBlNqEWE?t=0s) 
 
 <br>
 
