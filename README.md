@@ -1,4 +1,4 @@
-# DevIT Up! 참여형 강의 플랫폼
+# DevIT 참여형 강의 플랫폼
 
 <br>
 
@@ -13,7 +13,7 @@
 
 ## Index
 
-- [DevIT Up! 참여형 강의 플랫폼](#devit-up-참여형-강의-플랫폼)
+- [DevIT 참여형 강의 플랫폼](#devit-참여형-강의-플랫폼)
   - [Index](#index)
   - [Team's 'DevIT' 프로젝트 참여자](#teams-devit-프로젝트-참여자)
   - [기획 및 협업을 위한 작업물](#기획-및-협업을-위한-작업물)
@@ -58,7 +58,7 @@
 
 ## 기획 및 협업을 위한 작업물
 
-Notion으로 오세요! [DevIT Up! - 참여형 강의 플랫폼](https://www.notion.so/msnodeve/DevIT-Up-64f92628821f46478d47d57fb70f016f)
+Notion으로 오세요! [DevIT - 참여형 강의 플랫폼](https://www.notion.so/msnodeve/DevIT-Up-64f92628821f46478d47d57fb70f016f)
 
 
 
